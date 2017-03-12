@@ -2,11 +2,10 @@
 
 '''一个简单的通联数据客户端，主要使用requests开发，比通联官网的python例子更为简洁。'''
 
-
+import os
 import requests
 import json
 
-FILENAME = 'datayes.json'
 HTTP_OK = 200
 
 
@@ -28,7 +27,7 @@ class DatayesClient(object):
         self.loadSetting()
         
     #----------------------------------------------------------------------
-    def loadSetting(self):
+    def loadSetting(self, FILENAME='datayes.json'):
         """载入配置"""
         try:
             path = os.path.abspath(os.path.dirname(__file__))
