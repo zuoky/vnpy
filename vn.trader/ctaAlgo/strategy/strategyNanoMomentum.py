@@ -284,3 +284,35 @@ class NanoMomentumStrategy(CtaTemplate):
             self.pendingOrders[order_id] = current_time
 
         self.putEvent()
+
+if __name__ == '__main__':
+    # 提供直接双击回测的功能
+    # 导入PyQt4的包是为了保证matplotlib使用PyQt4而不是PySide，防止初始化出错
+    from ctaBacktesting import *
+    from PyQt4 import QtCore, QtGui
+
+    # 创建回测引擎
+    engine = BacktestingEngine()
+
+    # 设置引擎的回测模式为K线
+    engine.setBacktestingMode(engine.TICK_MODE)
+
+    # 设置回测用的数据起始日期
+    engine.setStartDate('20170203')
+
+    # 设置产品相关参数
+    engine.setSlippage(0.2)     # 股指1跳
+    engine.setRate(0.3/10000)   # 万0.3
+    engine.setSize(5)           # 股指合约大小
+
+    # 设置使用的历史数据库
+    engine.setDatabase(TICK_DB_NAME, 'cu1704')
+
+    # 在引擎中创建策略对象
+    engine.initStrategy(NanoMomentumStrategy, {})
+
+    # 开始跑回测
+    engine.runBacktesting()
+
+    # 显示回测结果
+    engine.showBacktestingResult()
