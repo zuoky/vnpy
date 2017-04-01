@@ -20,7 +20,9 @@ class NanoMomentumStrategy(CtaTemplate):
 
     # 策略参数
     orderTimeout = 1000    # In Milliseconds, cancel the order if it didn't get executed within the orderTimeout.
-    orderDeadTime = 1500   # In Milliseconds, flatten the position if the order had been executed times ago
+    orderDeadTime = 2500   # In Milliseconds, flatten the position if the order had been executed times ago
+    priceMinDelata = 10    # In Dollar Value
+    orderVolume = 2        # Order Volume to long/short
     initDays = 1           # 初始化数据所用的天数
 
     # 策略变量
@@ -42,8 +44,11 @@ class NanoMomentumStrategy(CtaTemplate):
     paramList = ['name',
                  'className',
                  'author',
-                 'vtSymbol',
-                 'orderTimeout']
+                 'vtSymbol'
+                 # 'orderTimeout',
+                 # 'priceMinDelata',
+                 # 'orderVolume'
+                 ]
 
     # 变量列表，保存了变量的名称
     varList = ['inited',
@@ -98,7 +103,7 @@ class NanoMomentumStrategy(CtaTemplate):
         """收到行情TICK推送（必须由用户继承实现）"""
         self.lastTick = self.currentTick
         self.currentTick = tick
-        self.currentPriceDirection = self.currentPrice - self.lastPrice
+        self.lastPriceDirection = self.currentPrice - self.lastPrice
         self.lastPrice = self.currentPrice
         self.currentPriceDirection = self.currentTick.lastPrice - self.currentPrice
         self.currentPrice = self.currentTick.lastPrice
@@ -119,9 +124,9 @@ class NanoMomentumStrategy(CtaTemplate):
                 and self.currentPrice == self.currentTick.askPrice1 \
                 and self.lastPriceDirection > 0:
             self.writeCtaLog('Strategy decides to seek for long position according to buy-1')
-            self.target_long_position(self.currentTick.bidPrice1,
-                                      self.currentTick.askPrice1,
-                                      self.currentTick.bidVolume1)
+            self.target_long_position(self.currentTick.bidPrice1 - self.priceMinDelata,
+                                      self.currentTick.askPrice1 + self.priceMinDelata,
+                                      self.orderVolume)
             return
 
         # When to hold
@@ -152,23 +157,27 @@ class NanoMomentumStrategy(CtaTemplate):
         if self.currentOrderExecutionTime \
                 and current_time - self.currentOrderExecutionTime >= self.orderDeadTime:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-1')
-            self.flatten_position(self.currentTick.bidPrice1, self.currentTick.askPrice1)
+            self.flatten_position(self.currentTick.bidPrice1,  # Sell using the bid price
+                                  self.currentTick.askPrice1)  # Buy using the ask price
             return
 
         if self.lastTick.bidPrice1 < self.currentTick.bidPrice1 == self.currentPrice:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-2')
-            self.flatten_position(self.currentTick.bidPrice1, self.currentTick.askPrice1)
+            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelata,
+                                  self.currentTick.askPrice1 + self.priceMinDelata)
             return
 
 
         if self.currentPrice > self.currentCost and self.currentPriceDirection < 0:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-3')
-            self.flatten_position(self.currentTick.bidPrice1, self.currentTick.askPrice1)
+            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelata,
+                                  self.currentTick.askPrice1 + self.priceMinDelata)
             return
 
         if self.currentPrice <= self.currentCost:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-4')
-            self.flatten_position(self.currentTick.bidPrice1, self.currentTick.askPrice1)
+            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelata,
+                                  self.currentTick.askPrice1 + self.priceMinDelata)
             return
 
     #----------------------------------------------------------------------

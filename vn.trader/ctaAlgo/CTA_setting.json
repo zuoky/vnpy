@@ -15,5 +15,11 @@
         "name": "king keltner",
         "className": "KkStrategy",
         "vtSymbol": "IH1706"
+    },
+
+    {
+        "name": "nano momentum",
+        "className": "NanoMomentumStrategy",
+        "vtSymbol": "cu1704"
     }
 ]
