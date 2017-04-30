@@ -10,7 +10,7 @@ from pymongo.errors import ConnectionFailure
 from eventEngine import *
 from vtGateway import *
 from vtFunction import loadMongoSetting
-from language import text
+from lang import text
 
 from gateway import GATEWAY_DICT
 from ctaStrategy.ctaEngine import CtaEngine

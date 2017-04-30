@@ -13,7 +13,7 @@ import multiprocessing
 import pymongo
 
 from ctaBase import *
-from vtConstant import *
+from lang.english.constant import *
 from vtGateway import VtOrderData, VtTradeData
 from vtFunction import loadMongoSetting
 
