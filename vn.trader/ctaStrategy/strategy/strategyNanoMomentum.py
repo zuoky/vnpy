@@ -6,9 +6,6 @@
 
 """
 
-from datetime import datetime
-
-from ctaStrategy.ctaBase import *
 from ctaStrategy.ctaTemplate import CtaTemplate
 from lang.english.constant import EMPTY_INT
 
@@ -20,9 +17,9 @@ class NanoMomentumStrategy(CtaTemplate):
     author = 'zuoky'
 
     # 策略参数
-    orderTimeout = 1000    # In Milliseconds, cancel the order if it didn't get executed within the orderTimeout.
-    orderDeadTime = 2500   # In Milliseconds, flatten the position if the order had been executed times ago
-    priceMinDelata = 10    # In Dollar Value
+    orderTimeout = 1.5    # In Seconds, cancel the order if it didn't get executed within the orderTimeout.
+    orderDeadTime = 2.5   # In Seconds, flatten the position if the order had been executed times ago
+    priceMinDelta = 10    # In Dollar Value
     orderVolume = 2        # Order Volume to long/short
     initDays = 1           # 初始化数据所用的天数
 
@@ -109,11 +106,14 @@ class NanoMomentumStrategy(CtaTemplate):
         self.currentPriceDirection = self.currentTick.lastPrice - self.currentPrice
         self.currentPrice = self.currentTick.lastPrice
 
-        current_time = datetime.now().time()
+        if self.lastTick is None or self.currentTick is None:
+            return
+
+        current_time = datetime.now()
 
         # Cancel pending orders if timeout
         for vtOrderID, orderTime in self.pendingOrders.iteritems():
-            if current_time - orderTime >= self.orderTimeout:
+            if (current_time - orderTime).total_seconds() >= self.orderTimeout:
                 self.writeCtaLog('Strategy decides to cancel pending order: {}'.format(vtOrderID))
                 self.cancelOrder(vtOrderID)
 
@@ -125,8 +125,8 @@ class NanoMomentumStrategy(CtaTemplate):
                 and self.currentPrice == self.currentTick.askPrice1 \
                 and self.lastPriceDirection > 0:
             self.writeCtaLog('Strategy decides to seek for long position according to buy-1')
-            self.target_long_position(self.currentTick.bidPrice1 - self.priceMinDelata,
-                                      self.currentTick.askPrice1 + self.priceMinDelata,
+            self.target_long_position(self.currentTick.bidPrice1 - self.priceMinDelta,
+                                      self.currentTick.askPrice1 + self.priceMinDelta,
                                       self.orderVolume)
             return
 
@@ -156,7 +156,7 @@ class NanoMomentumStrategy(CtaTemplate):
         # OR
         # 1. Current Price <= Current Cost
         if self.currentOrderExecutionTime \
-                and current_time - self.currentOrderExecutionTime >= self.orderDeadTime:
+                and (current_time - self.currentOrderExecutionTime).total_seconds() >= self.orderDeadTime:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-1')
             self.flatten_position(self.currentTick.bidPrice1,  # Sell using the bid price
                                   self.currentTick.askPrice1)  # Buy using the ask price
@@ -164,21 +164,21 @@ class NanoMomentumStrategy(CtaTemplate):
 
         if self.lastTick.bidPrice1 < self.currentTick.bidPrice1 == self.currentPrice:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-2')
-            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelata,
-                                  self.currentTick.askPrice1 + self.priceMinDelata)
+            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelta,
+                                  self.currentTick.askPrice1 + self.priceMinDelta)
             return
 
 
         if self.currentPrice > self.currentCost and self.currentPriceDirection < 0:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-3')
-            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelata,
-                                  self.currentTick.askPrice1 + self.priceMinDelata)
+            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelta,
+                                  self.currentTick.askPrice1 + self.priceMinDelta)
             return
 
         if self.currentPrice <= self.currentCost:
             self.writeCtaLog('Strategy decides to flatten position according to flatten-4')
-            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelata,
-                                  self.currentTick.askPrice1 + self.priceMinDelata)
+            self.flatten_position(self.currentTick.bidPrice1 - self.priceMinDelta,
+                                  self.currentTick.askPrice1 + self.priceMinDelta)
             return
 
     #----------------------------------------------------------------------
@@ -199,7 +199,7 @@ class NanoMomentumStrategy(CtaTemplate):
     def onTrade(self, trade):
         """收到成交推送（必须由用户继承实现）"""
         # 对于无需做细粒度委托控制的策略，可以忽略onTrade
-        self.currentOrderExecutionTime = datetime.now().time()
+        self.currentOrderExecutionTime = datetime.now()
         self.currentCost = trade.price
 
         # 发出状态更新事件
@@ -207,7 +207,7 @@ class NanoMomentumStrategy(CtaTemplate):
 
 
     def target_long_position(self, bid_price, ask_price, target_pos):
-        current_time = datetime.now().time()
+        current_time = datetime.now()
         current_position = self.pos
         self.writeCtaLog(
             'Strategy targets long position [{}], current position [{}]'.format(target_pos, current_position))
@@ -239,7 +239,7 @@ class NanoMomentumStrategy(CtaTemplate):
 
 
     def flatten_position(self, bid_price, ask_price):
-        current_time = datetime.now().time()
+        current_time = datetime.now()
         current_position = self.pos
         self.writeCtaLog('Strategy targets flatten position, current position [{}]'.format(current_position))
 
@@ -256,7 +256,7 @@ class NanoMomentumStrategy(CtaTemplate):
 
 
     def target_short_position(self, bid_price, ask_price, target_pos):
-        current_time = datetime.now().time()
+        current_time = datetime.now()
         current_position = self.pos
         self.writeCtaLog(
             'Strategy targets short position [{}], current position [{}]'.format(target_pos, current_position))
@@ -288,9 +288,9 @@ class NanoMomentumStrategy(CtaTemplate):
 
 if __name__ == '__main__':
     # 提供直接双击回测的功能
-    # 导入PyQt4的包是为了保证matplotlib使用PyQt4而不是PySide，防止初始化出错
     from ctaStrategy.ctaBacktesting import *
-    # from PyQt4 import QtCore, QtGui
+    # 导入PyQt4的包是为了保证matplotlib使用PyQt4而不是PySide，防止初始化出错
+    from PyQt4 import QtCore, QtGui
 
     # 创建回测引擎
     engine = BacktestingEngine()
@@ -299,12 +299,12 @@ if __name__ == '__main__':
     engine.setBacktestingMode(engine.TICK_MODE)
 
     # 设置回测用的数据起始日期
-    engine.setStartDate('20170203')
+    engine.setStartDate('20170201', initDays=1)
 
     # 设置产品相关参数
-    engine.setSlippage(0.2)     # 股指1跳
+    engine.setSlippage(0.2)     # 期货1跳
     engine.setRate(0.3/10000)   # 万0.3
-    engine.setSize(5)           # 股指合约大小
+    engine.setSize(5)           # 期货合约大小，铜五吨一手
 
     # 设置使用的历史数据库
     engine.setDatabase(TICK_DB_NAME, 'cu1704')

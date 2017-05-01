@@ -1,16 +1,17 @@
 # encoding: UTF-8
 
-'''
+"""
 本文件中包含了CTA模块中用到的一些基础设置、类和常量等。
-'''
+"""
 
 from __future__ import division
 
+# CTA引擎中涉及的数据类定义
+from lang.english.constant import EMPTY_UNICODE, EMPTY_STRING, EMPTY_FLOAT, EMPTY_INT
 
 # 把vn.trader根目录添加到python环境变量中
 import sys
 sys.path.append('..')
-
 
 # 常量定义
 # CTA引擎中涉及到的交易方向类型
@@ -38,9 +39,6 @@ MINUTE_DB_NAME = 'VnTrader_1Min_Db'
 # 引擎类型，用于区分当前策略的运行环境
 ENGINETYPE_BACKTESTING = 'backtesting'  # 回测
 ENGINETYPE_TRADING = 'trading'          # 实盘
-
-# CTA引擎中涉及的数据类定义
-from vtConstant import EMPTY_UNICODE, EMPTY_STRING, EMPTY_FLOAT, EMPTY_INT
 
 
 ########################################################################
