@@ -5,6 +5,9 @@
 一个基于tick级别细粒度撤单追单的交易策略，适合用在商品期貨的数据上。
 
 """
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
 from ctaStrategy.ctaTemplate import CtaTemplate
 from lang.english.constant import EMPTY_INT
@@ -299,7 +302,7 @@ if __name__ == '__main__':
     engine.setBacktestingMode(engine.TICK_MODE)
 
     # 设置回测用的数据起始日期
-    engine.setStartDate('20170201', initDays=1)
+    engine.setStartDate('20170223', initDays=1)
 
     # 设置产品相关参数
     engine.setSlippage(0.2)     # 期货1跳
